@@ -8,6 +8,6 @@
 /// otherwise the makespan is increased and the search is continued.
 /// Then the leveled plan is used to create a timed plan using a Simple Temporal Network
 /// For more info refer to the ITSAT paper.
-bool Alg2Layer(AlgCommonParams p);
+bool Alg2Layer(AlgCommonParams p, int maxLookingAround = 10);
 
 #endif

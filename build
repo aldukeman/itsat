@@ -1,4 +1,2 @@
 make clean
-make 
-cp gccRelease/tsat.exe ./plan
-
+make -j4

@@ -27,8 +27,8 @@ Debug_Implicitly_Linked_Objects=
 Release_Implicitly_Linked_Objects=
 
 # Compiler flags...
-Debug_Compiler_Flags=-O0 -g 
-Release_Compiler_Flags=-O2 
+Debug_Compiler_Flags=-O0 -g -std=c++11
+Release_Compiler_Flags=-O3 -std=c++11
 
 # Builds all configurations for this project...
 .PHONY: build_all_configurations

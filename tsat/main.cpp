@@ -82,6 +82,13 @@ AND HERE IS THE COPYRIGHT NOTICE FROM STRATHCLYDE PLANNINF GROUP:
 using namespace std;
 using namespace MyParser;
 
+// ALD: for memory usage and time
+//********
+#include <sys/resource.h>
+#include <chrono>
+//********
+////////////
+
 #include "tsat/val/ptree.h"
 #include "tsat/val/FlexLexer.h"
 using namespace VAL;
@@ -95,7 +102,7 @@ char *current_filename;
 void disableCloseDebugDialog();
 void copyright();
 void usage(char *exeName);
-bool parseCommandLine(int argc, char * argv[], char * &domainFileName, char * &problemFileName, AlgCommonParams &commonParams, bool &RunAlg1Time);
+bool parseCommandLine(int argc, char * argv[], char * &domainFileName, char * &problemFileName, char * &timingFile, AlgCommonParams &commonParams, bool &RunAlg1Time, int &maxPlans);
 bool valParser(parse_category * &mydomain, parse_category * &myproblem, char * domainFileName, char * problemFileName);
 
 namespace VAL {
@@ -107,13 +114,16 @@ namespace VAL {
 
 int main(int argc, char * argv[])
 {
+  std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+
 	// no need to this. for more info look inside the function
 	// disableCloseDebugDialog();
 
 	AlgCommonParams commonParams;
-	char *domainFileName = NULL, *problemFileName = NULL;
+	char *domainFileName = NULL, *problemFileName = NULL, *timingFile = nullptr;
+  int maxPlans = 10;
 	bool RunAlg1Time = true;
-	if( ! parseCommandLine(argc, argv, domainFileName, problemFileName, commonParams, RunAlg1Time) )
+	if( ! parseCommandLine(argc, argv, domainFileName, problemFileName, timingFile, commonParams, RunAlg1Time, maxPlans) )
 		return 1;
 
 	cout << "Using SAT Solver : " << commonParams.satsolver << endl;
@@ -209,7 +219,7 @@ int main(int argc, char * argv[])
 //		if(RunAlg1Time) // run algorithm 1 (planner used in seminar)
 //			Alg1Time(commonParams);
 //		else            // run algorithm 2 (based on 'implicit time' idea)
-			Alg2Layer(commonParams);
+			Alg2Layer(commonParams, maxPlans);
 	}
 	catch(const exception &e)
 	{
@@ -221,6 +231,15 @@ int main(int argc, char * argv[])
 	//ChangeDir("..");
 	//getchar();
 #endif
+
+  if(timingFile)
+  {
+    struct rusage r;
+    getrusage(RUSAGE_SELF, &r);
+    std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+    std::ofstream output(timingFile);
+    output << r.ru_maxrss << "," << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+  }
 
 	return 0;
 }
@@ -274,9 +293,11 @@ void usage(char * exeName)
 	cout << "  -conflicts: n2all => complete set - O(n^2) clauses (default)" << endl;
 	cout << "  -graph: {nograph || fact || all} (default all)" << endl;
 	cout << "  -satsolver: {precosat || minisat || zchaff} (default precosat)" << endl;
+	cout << "  -y <file>: file to which to write timing data" << endl;
+	cout << "  -m n: max plans to find" << endl;
 }
 
-bool parseCommandLine(int argc, char * argv[], char * &domainFileName, char * &problemFileName, AlgCommonParams &commonParams, bool &RunAlg1Time)
+bool parseCommandLine(int argc, char * argv[], char * &domainFileName, char * &problemFileName, char * &timingFile, AlgCommonParams &commonParams, bool &RunAlg1Time, int &maxPlans)
 {
 #ifdef TA_PROJECT
 	if(argc<3)
@@ -313,7 +334,7 @@ bool parseCommandLine(int argc, char * argv[], char * &domainFileName, char * &p
 	commonParams.TEnd = INT_MAX;
 	commonParams.overall = 0;
 	commonParams.TMultiply = 1;
-	commonParams.TPlus = 3;
+	commonParams.TPlus = 1;
 	commonParams.AvailableTime = 18000;
 	commonParams.StageTime = 180;
 	commonParams.conflictsMethod = 3; // n2all
@@ -349,6 +370,10 @@ bool parseCommandLine(int argc, char * argv[], char * &domainFileName, char * &p
 				commonParams.overall = atof(argv[++i]); // also increments i
 			else if(strcmp(argv[i],"-alg") == 0)
 				RunAlg1Time = strcmp(argv[++i], "time") == 0; // also increments i
+			else if(strcmp(argv[i],"-y") == 0)
+        timingFile = argv[++i];
+			else if(strcmp(argv[i],"-m") == 0)
+        maxPlans = atoi(argv[++i]);
 			else if(strcmp(argv[i],"-conflicts") == 0)
 			{
 				i++;

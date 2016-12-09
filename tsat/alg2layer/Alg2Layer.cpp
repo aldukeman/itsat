@@ -16,7 +16,7 @@ using namespace std;
 using namespace MyParser;
 using namespace nsSatLayer;
 
-bool Alg2Layer(AlgCommonParams p)
+bool Alg2Layer(AlgCommonParams p, int maxLookingAround)
 {
 	//if(p.satsolver=="minisat")
 	//	limitMemory(2*1024); // 2 GB
@@ -29,7 +29,6 @@ bool Alg2Layer(AlgCommonParams p)
 
 	bool solutionFound = false;
 	int solfoundStep = 1; // 1 => -2 => 3 => -4 => 5 ...
-	int maxLookingAround = 10; // FIXME: move this to the program switches
 	double bestMakeSpan = DBL_MAX;
 	vector<SATResults *> elapsed;
 	SatLayer *solver = NULL;
