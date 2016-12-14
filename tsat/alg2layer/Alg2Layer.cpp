@@ -224,19 +224,33 @@ bool Alg2Layer(AlgCommonParams p, int maxLookingAround)
 	//cout << endl << "*" << endl;
 	bool canbedel;
 	for (int j=0; j<pProblem.initialState.size(); j++)
-	if (relprop[pProblem.initialState[j]])
-	{
-		canbedel=false;
-		const PProposition *prop1= pProblem.pAllProposition.GetPropositionById(pProblem.initialState[j]);
-		for (it1=prop1->delEffectAtStart.begin(); ((it1!=prop1->delEffectAtStart.end()) && (!canbedel)); it1++)
-			if (relac[*it1])
-				canbedel=true;
-		for (it1=prop1->delEffectAtEnd.begin(); ((it1!=prop1->delEffectAtEnd.end()) && (!canbedel)); it1++)
-			if (relac[*it1])
-				canbedel=true;
-		if (!canbedel)
-			relprop[pProblem.initialState[j]]=false;
-	}
+  {
+    bool isGoalProp = false;
+	  for (int k=0; k<pProblem.goals.size(); k++)
+	  {
+      if(pProblem.goals[k] == pProblem.initialState[j])
+      {
+        isGoalProp = true;
+        break;
+      }
+	  }
+  
+  	if (relprop[pProblem.initialState[j]] && !isGoalProp)
+  	{
+  		canbedel=false;
+  		const PProposition *prop1= pProblem.pAllProposition.GetPropositionById(pProblem.initialState[j]);
+  		for (it1=prop1->delEffectAtStart.begin(); ((it1!=prop1->delEffectAtStart.end()) && (!canbedel)); it1++)
+  			if (relac[*it1])
+  				canbedel=true;
+
+  		for (it1=prop1->delEffectAtEnd.begin(); ((it1!=prop1->delEffectAtEnd.end()) && (!canbedel)); it1++)
+  			if (relac[*it1])
+  				canbedel=true;
+
+  		if (!canbedel)
+  			relprop[pProblem.initialState[j]]=false;
+  	}
+  }
 	int totalrel=0;
 	for (int j=0; j<nAction; j++)
 		if (relac[j])
