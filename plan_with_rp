@@ -1,0 +1,66 @@
+#!/usr/bin/perl -w
+use File::Basename;
+
+if ((scalar @ARGV) != 4) {
+	print "Usage: plan <domain> <problem> <solution> <timing>\n";
+	exit(1);
+}
+
+$dir = dirname(__FILE__);
+$dom = shift @ARGV;
+$prob = shift @ARGV;
+$soln = shift @ARGV;
+$timing = shift @ARGV;
+$rp_check = "$dir/../colin2/rp_exists";
+
+if (!(-e $dom)) {
+	print "Domain file $dom not found\n";
+	exit(1);
+}
+
+if (!(-e $prob)) {
+  print "Problem file $prob not found\n";
+  exit(1);
+}
+
+system("$rp_check", "$dom", "$prob");
+$exit_code = $? >> 8;
+
+# check if rp exists
+if ($exit_code == 1) {
+  print "No rp for problem\n";
+  exit(1);
+}
+
+#system("$dir/gccRelease/tsat.exe", "-y", "$timing", "-m", "1", "$dom", "$prob", "$soln");
+#system("$dir/gccRelease/tsat.exe", "-y", "$timing", "-m", "1", "-t*", "1.2", "$dom", "$prob", "$soln");
+#system("$dir/gccRelease/tsat.exe", "-y", "$timing", "-m", "1", "-t+", "3", "$dom", "$prob", "$soln");
+system("$dir/gccRelease/tsat.exe", "-y", "$timing", "-m", "1", "-t+", "3", "-limit", "14400", "-stagelimit", "1200", "$dom", "$prob", "$soln");
+$exit_code = $? >> 8;
+system("cp", "$soln.1", "$soln");
+exit($exit_code);
+
+#Usage: ./gccRelease/tsat.exe [switches] domain-pddl-file problem-pddl-file [plan-file]
+#       if plan-file is leaved empty, name will be generated automatically
+#       if plan-file is *, the plan output will be on the console
+#Switches:
+#  -ground: Writes the ground version of problem in .grn file
+#  -cnf: Creates CNF file for each generated encoding
+#  -readablecnf: Creates readable CNF file for each generated encoding
+#  -dontsolve: Will not try to solve encodings, use with -cnf or -readablecnf
+#  -t1 n: Starting Makespan will be n (ex. 1, default 1)
+#  -t2 n: Maximum Makespan will be n (ex. 20, default +Inf)
+#  -t+ n: Increase Makespan by n steps (ex. 1, default 1)
+#  -t* f: Increase Makespan by multiplication by f (ex. 1.2, default 1)
+#  -limit n: Sets global time limit to n (in seconds) (ex. 60, default 1800)
+#  -stagelimit n: Sets stage time limit for to n (in seconds) (ex. 60, def. 300)
+#  -overall f: Sets the percentage of redundant overall mutexes to f
+#       (ex. 100, default 0), use only with "-alg time"
+#  -alg time|layer: Specifies which algorithm to run (default layer)
+#  -conflicts: nlogn => reduced set - O(nlogn) clauses
+#  -conflicts: n2 ====> reduced set - O(n^2) clauses
+#  -conflicts: n2all => complete set - O(n^2) clauses (default)
+#  -graph: {nograph || fact || all} (default all)
+#  -satsolver: {precosat || minisat || zchaff} (default precosat)
+#  -y <file>: file to which to write timing data
+#  -m n: max plans to find
