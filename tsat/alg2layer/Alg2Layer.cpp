@@ -139,6 +139,9 @@ bool Alg2Layer(AlgCommonParams p, int maxLookingAround)
 	bool *relprop= new bool[nProp];
 	for (int j=0; j<nProp; j++)
 		relprop[j]=false;
+	bool *staticGoal = new bool[nProp];
+	for (int j=0; j<nProp; j++)
+		staticGoal[j]=false;
 	int *newp= new int [nProp];
 	int nnewp=0;
 	for (int j=0; j<pProblem.goals.size(); j++)
@@ -225,17 +228,7 @@ bool Alg2Layer(AlgCommonParams p, int maxLookingAround)
 	bool canbedel;
 	for (int j=0; j<pProblem.initialState.size(); j++)
   {
-    bool isGoalProp = false;
-	  for (int k=0; k<pProblem.goals.size(); k++)
-	  {
-      if(pProblem.goals[k] == pProblem.initialState[j])
-      {
-        isGoalProp = true;
-        break;
-      }
-	  }
-  
-  	if (relprop[pProblem.initialState[j]] && !isGoalProp)
+  	if (relprop[pProblem.initialState[j]])
   	{
   		canbedel=false;
   		const PProposition *prop1= pProblem.pAllProposition.GetPropositionById(pProblem.initialState[j]);
@@ -248,7 +241,19 @@ bool Alg2Layer(AlgCommonParams p, int maxLookingAround)
   				canbedel=true;
 
   		if (!canbedel)
+      {
   			relprop[pProblem.initialState[j]]=false;
+
+        // ALD: to ignore static goals in initial state
+	      for (int k=0; k<pProblem.goals.size(); k++)
+	      {
+          if(pProblem.initialState[j] == pProblem.goals[k])
+          {
+            staticGoal[pProblem.initialState[j]] = true;
+            break;
+          }
+	      }
+      }
   	}
   }
 	int totalrel=0;
@@ -597,7 +602,7 @@ bool Alg2Layer(AlgCommonParams p, int maxLookingAround)
 		pProblem.initialState.clear();
 		for (int j=0; j<nnewinit; j++)
 			pProblem.initialState.push_back(newinit[j]);
-		delete newinit;
+		delete [] newinit;
 		for (int j=0; j<pProblem.goals.size(); j++)
 		{
 			
@@ -606,19 +611,20 @@ bool Alg2Layer(AlgCommonParams p, int maxLookingAround)
 				pProblem.goals[j]=newpropid[pProblem.goals[j]];
 				//atleastone=pProblem.initialState[j];
 			}
-			else
+			else if(!staticGoal[pProblem.goals[j]])
 			{
 				cout << endl << "ERROR: Goals Deleted" << endl;
 				exit(0);
 			}
 		}
-	delete relac;
-	delete relprop;
-	delete newp;
-	delete newacid;
-	delete newpropid;
-	delete newvalac;
-	delete newvalprop;
+	delete [] relac;
+	delete [] relprop;
+	delete [] staticGoal;
+	delete [] newp;
+	delete [] newacid;
+	delete [] newpropid;
+	delete [] newvalac;
+	delete [] newvalprop;
 	//cout << endl << double(totalrel)/nAction << endl;
 	cout << endl << "Number of Actons: " << nAction<< "    Number of Propositions: " << nProp<< endl;
 	//exit(0);	
